@@ -71,10 +71,20 @@ object GraphBasics extends App {
    * */
   import scala.concurrent.duration._
 
-  val fastSource = Source(1 to 1000)
+  val fastSource = Source(1 to 1000).throttle(5, 1 second)
   val slowSource = Source(1 to 1000).throttle(2, 1 second)
+  val sink1 = Sink.fold[Int, Int](0)((count, _) => {
+    println(s"Sink 1: number of elements $count")
+    count + 1
+  })
 
-  val twoSourceToOneSink = RunnableGraph.fromGraph(
+  val sink2 = Sink.fold[Int, Int](0)((count, _) => {
+    println(s"Sink 1: number of elements $count")
+    count + 1
+  })
+
+
+  val balanceGraph = RunnableGraph.fromGraph(
     GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
 
       import GraphDSL.Implicits._
@@ -88,14 +98,14 @@ object GraphBasics extends App {
       fastSource ~> merge
       slowSource ~> merge
 
-      merge ~> balance ~> Sink.foreach[Int](x => println(s"First Sink: $x"))
-               balance ~> Sink.foreach[Int](x => println(s"Second Sink: $x"))
+      merge ~> balance ~> sink1
+               balance ~> sink2
 
       ClosedShape
 
     }
   )
 
-  twoSourceToOneSink.run()
+  balanceGraph.run()
 }
 
