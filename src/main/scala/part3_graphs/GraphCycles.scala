@@ -69,7 +69,7 @@ object GraphCycles extends App {
     ClosedShape
   }
 
-  RunnableGraph.fromGraph(bufferRepeater).run()
+  // RunnableGraph.fromGraph(bufferRepeater).run()
 
   /*
    cycles risk deadlocking
@@ -122,7 +122,7 @@ object GraphCycles extends App {
 
       ClosedShape
     }
-  )
+  ).run()
 
 
 

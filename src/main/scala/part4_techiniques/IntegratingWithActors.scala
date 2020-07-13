@@ -8,14 +8,14 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 
 object IntegratingWithActors extends App {
+
   implicit val system: ActorSystem = ActorSystem("IntegratingWithActors")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
-
 
   class SimpleActor extends Actor with ActorLogging {
     override def receive: Receive = {
       case s: String =>
-        log.info(s"JUst received a a string: $s")
+        log.info(s"Just received a a string: $s")
         sender() ! s"$s:$s"
       case n: Int =>
         log.info(s"JUst received a a number: $n")
@@ -27,13 +27,15 @@ object IntegratingWithActors extends App {
   val simpleActor = system.actorOf(Props[SimpleActor], "simpleActor")
 
   val numberSource = Source(1 to 10)
+  val stringSource = Source(List("Dada", "Vitao"))
 
   // actor as a flow
   implicit val timeout = Timeout(2 seconds)
   val actorBasedFlow = Flow[Int].ask[Int](parallelism = 4)(simpleActor)
+  val actorStringBasedFlow = Flow[String].ask[String](parallelism = 4)(simpleActor)
 
   // Equivalent
-  // numberSource.via(actorBasedFlow).to(Sink.ignore).run()
+  stringSource.via(actorStringBasedFlow).to(Sink.ignore).run()
   // numberSource.ask[Int](parallelism = 4)(simpleActor).to(Sink.ignore).run()
 
   /*
@@ -85,7 +87,7 @@ object IntegratingWithActors extends App {
       onFailureMessage = ex => StreamFail(ex) // optional
     )
 
-    Source(1 to 10).to(actorPoweredSink).run()
+   // Source(1 to 10).to(actorPoweredSink).run()
 
     // Sink.actorRef() not recommended, unable to backpressure
   }
